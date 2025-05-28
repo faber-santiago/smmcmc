@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 class smmcmc:
     def __init__(self, SphenoBlocksDict, ExpectedDataDict, ConstraintsBeforeSPheno, ConstraintsAfterSPheno,
-                SPhenoFilePath, SPhenoInputFilePath, SPhenoOutputFilePath, UseMicrOmegas = False, MicrOmegasFilePath = " ",
+                SPhenoFilePath, SPhenoInputFilePath, UseMicrOmegas = False, MicrOmegasFilePath = " ",
                 nWalkers = 100, LikelihoodThreshold = 0.9, AcceptedPoints = 1000, OutputMCMCfile = "output_mcmc.csv",
                 Steps = None, Stretch = 1.2, LogParameterization = False, StrictParametersRanges = True, WriteOnlyAccepted = True):
 
@@ -292,18 +292,6 @@ class smmcmc:
         SPhenoInputFilePath = "/home/f.herreras/SPheno-4.0.5/Scoto_SLNV_11.10/Input_Files/LesHouches.in.Scotogenic_SLNV"
         ```
 
-        ### SPhenoOutputFilePath (string):
-
-        Este parámetro indica la ruta absoluta al archivo de output del modelo de SPheno. Esta es la ruta a la carpeta donde se encuentra el código
-        +  SPheno.spc. + el nombre del modelo:
-
-        [Directorio]/SPheno.spc.[Nombre_del_Modelo]
-
-        Ejemplo:
-        ```python
-        SPhenoOutputFilePath = "/home/f.herreras/Code/SPheno.spc.Scotogenic_SLNV"
-        ```
-
         ### UseMicrOmegas (boolean):
 
         Este parámetro indica si se usa o no MicrOmegas en el análisis. Por defecto es False, pero si se especifica como True el código llama a MicrOmegas en cada ciclo alimentándolo
@@ -382,7 +370,6 @@ class smmcmc:
         self.constraints_after_spheno = ConstraintsAfterSPheno 
         self.spheno_file_path = SPhenoFilePath 
         self.spheno_input_file_path = SPhenoInputFilePath 
-        self.spheno_output_file_path = SPhenoOutputFilePath 
         self.use_micromegas = UseMicrOmegas 
         self.micromegas_file_path = MicrOmegasFilePath 
         self.nwalkers = nWalkers 
@@ -394,13 +381,9 @@ class smmcmc:
         self.log_parameterization = LogParameterization 
         self.strict_parameters_ranges = StrictParametersRanges 
         self.write_only_accepted = WriteOnlyAccepted
-        
         self.dinamic_likelihood = False
-        for blockname, block in self.expected_data_dict.items():
-            for key, value in block.items():   
-                if callable(block[key]):
-                    self.dinamic_likelihood = True
-                    
+        self.spheno_output_file_path = self.spheno_input_file_path.replace("LesHouches.in", "SPheno.spc")
+
 
     
     @staticmethod
@@ -608,8 +591,13 @@ class smmcmc:
 
         try:
 
-            command = subprocess.run([self.spheno_file_path, self.spheno_input_file_path],check=True,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+            input_dir = os.path.dirname(self.spheno_input_file_path)
+
+            command = subprocess.run([self.spheno_file_path, self.spheno_input_file_path],
+                                    check=True,
+                                    stdout = subprocess.PIPE,
+                                    stderr = subprocess.PIPE,
+                                    cwd = input_dir)
 
             output = command.stdout.decode()
             message = output
