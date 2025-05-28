@@ -932,7 +932,7 @@ class smmcmc:
 
                     else:
 
-                        accepted_samples_array = row[row[:,-1] > np.exp(self.likelihood_threshold)]
+                        accepted_samples_array = row[row[:,-1] >= np.exp(self.likelihood_threshold)]
                         f.writerows(accepted_samples_array)
 
                     if accepted_samples >= self.accepted_points:
