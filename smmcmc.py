@@ -618,11 +618,13 @@ class smmcmc:
 
     def run_micromegas(self):
         command = f"ulimit -c 0 && {self.micromegas_file_path} {self.spheno_output_file_path}"
+        work_dir = os.path.dirname(self.spheno_output_file_path)
         master, slave = pty.openpty()
 
         try:
             pid = os.fork()
             if pid == 0:  # Proceso hijo
+                os.chdir(work_dir)
                 os.dup2(slave, 1)  # Redirige stdout al terminal emulado
                 os.dup2(slave, 2)  # Redirige stderr al terminal emulado
                 os.close(master)
