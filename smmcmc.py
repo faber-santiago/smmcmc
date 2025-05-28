@@ -16,51 +16,49 @@ class smmcmc:
                 Steps = None, Stretch = 1.2, LogParameterization = False, StrictParametersRanges = True, WriteOnlyAccepted = True):
 
         """
-        La clase `smmcmc` permite explorar el espacio de parámetros de un modelo escotogénico utilizando el método de Markov Chain Monte Carlo (MCMC) 
-        y las herramientas computacionales SPheno y, opcionalmente, MicrOmegas. SPheno es indispensable para realizar los cálculos relacionados 
-        con las masas, los branching ratios y otros parámetros relevantes, mientras que MicrOmegas se emplea, 
-        si se activa, para estudiar propiedades de la materia oscura, como la densidad relicta. 
+        The `smmcmc` class allows for the exploration of the parameter space of a scotogenic model using the Markov Chain Monte Carlo (MCMC) method
+        and the computational tools SPheno and, optionally, MicrOmegas. SPheno is essential for performing calculations related to masses,
+        branching ratios, and other relevant parameters, while MicrOmegas is employed, if enabled, to study dark matter properties such as relic density.
 
-        Para el correcto funcionamiento de esta clase, es fundamental que el modelo físico esté completamente implementado y funcional tanto en SPheno 
-        como, si aplica, en MicrOmegas. Esto incluye garantizar que las configuraciones y definiciones de entrada estén correctamente configuradas 
-        en ambos softwares.
+        For the correct functioning of this class, it is essential that the physical model is fully implemented and functional in both SPheno
+        and, if applicable, MicrOmegas. This includes ensuring that input configurations and definitions are properly set up in both softwares.
 
-        ### Argumentos:
-        
+        ### Arguments:
+
         ### SphenoBlocksDict (dict):
-        Este argumento es un diccionario que contiene la definición de los parámetros del modelo que serán explorados durante el análisis. 
-        Es un diccionario de diccionarios estructurado en bloques que corresponden a los bloques de entrada del archivo de input de SPheno. 
-        Cada bloque se representa mediante un diccionario interno, donde:
+        This argument is a dictionary that defines the model parameters to be explored during the analysis.
+        It is a nested dictionary structured into blocks that correspond to the input blocks in the SPheno input file.
+        Each block is represented by an internal dictionary, where:
 
-        - Las *llaves* corresponden a los nombres de los bloques, tal como se definen en el archivo de entrada de SPheno (por ejemplo de BLOCK MINPAR, `"MINPAR"`).
-        - Los *valores* dentro de cada bloque son los parámetros que se quieren explorar. Estos parámetros pueden ser definidos de tres maneras diferentes:
+        - The *keys* correspond to the names of the blocks as defined in the SPheno input file (e.g., BLOCK MINPAR, "MINPAR").
+        - The *values* within each block are the parameters to be explored. These parameters can be defined in three different ways:
 
-            1. **Lista:** Si el parámetro debe variar dentro de un intervalo, se especifica una lista con dos elementos: 
-               el valor mínimo y el máximo del intervalo. Si se desea restringir estrictamente los valores generados al rango especificado, 
-               puede activarse el argumento `StrictParametersRanges`.
+            1. **List:** If the parameter should vary within an interval, a list with two elements is provided:
+            the minimum and maximum values of the interval. If you wish to strictly restrict the generated values to the specified range,
+            the `StrictParametersRanges` argument can be enabled.
 
-            2. **Número flotante (float):** Si el parámetro debe permanecer constante durante el análisis, se define directamente 
-               con su valor numérico.
+            2. **Float:** If the parameter should remain constant during the analysis, it is defined directly
+            with its numerical value.
 
-            3. **Función:** Si el valor de un parámetro debe calcularse dinámicamente en función de otros parámetros, se define una función.
-            Esta función debe ser definida previamente y debe tomar como argumento un diccionario que contiene todos los parámetros del modelo, accesibles mediante 
-            sus nombres especificando el bloque. La función debe devolver un único valor flotante. Por ejemplo:
+            3. **Function:** If the value of a parameter must be calculated dynamically based on other parameters, it is defined as a function.
+            This function must be defined beforehand and must take as an argument a dictionary containing all model parameters, accessible via
+            their block names. The function must return a single float value. For example:
 
-               ```python
-               def lambda1_fixed(parameters: dict):
+            ```python
+            def lambda1_fixed(parameters: dict):
                     other = parameters["OTHER"]
                     lambda_1 = (other["mH1"]**2) * (np.cos(other["alpha"])**2)
                     lambda_1 += (other["mH2"]**2) * (np.sin(other["alpha"])**2)
                     lambda_1 = lambda_1/(other["v"]**2)
                     return lambda_1
-               ```
-            
-            Si se quiere calcular varios parámetros a la vez con una sola función, al menos uno de los parámetros dentro de un bloque debe estar definido
-            como una función. No se puede definir directamente el nombre de un bloque como una función, ya que esto generaría un error. En su lugar, se debe nombrar un 
-            parámetro dentro del bloque como una función, y esta debe retornar un diccionario que contenga los bloques y los parámetros que se desean calcular. Al igual que
-            en el caso de un único parámetro, esta función debe ser definida previamente y debe tomar como argumento un diccionario que contiene todos los parámetros 
-            del modelo, accesibles mediante sus nombres especificando el bloque. Por ejemplo:
-               
+            ```
+
+            If you wish to calculate multiple parameters at once with a single function, at least one parameter inside a block must be defined
+            as a function. You cannot define the name of a block directly as a function, as this would generate an error. Instead, a
+            parameter within the block should be named as a function, and this must return a dictionary containing the blocks and parameters to be calculated.
+            As with the single parameter case, this function must be defined beforehand and must take as an argument a dictionary containing all model parameters,
+            accessible via their block names. For example:
+
                 ```python
                 def calculate_Yn(parameters: dict):
                     return {
@@ -77,14 +75,14 @@ class smmcmc:
                             "IYn(2,2)": 1.0,
                         }
                     }
-               ```
+            ```
 
-        Además, es posible incluir parámetros adicionales que no están incluídos en los bloques de SPheno pero que pueden ser necesarios para los cálculos. 
-        Estos parámetros pueden agruparse en bloques personalizados con nombres arbitrarios (por ejemplo, `"OTHER"`) para organizar valores fijos o generados 
-        que serán utilizados en funciones.
+        Additionally, you may include extra parameters not found in the SPheno blocks but necessary for calculations.
+        These can be grouped in custom blocks with arbitrary names (e.g., "OTHER") to organize fixed or generated values
+        used in functions.
 
-        #### Ejemplo de `SphenoBlocksDict`:
-        A continuación, se muestra un ejemplo de diccionario correctamente estructurado para este argumento:
+        #### Example of `SphenoBlocksDict`:
+        Below is a properly structured example dictionary for this argument:
 
         ```python
         SphenoBlocksDict = {
@@ -109,58 +107,60 @@ class smmcmc:
         }
         ```
 
-        Este ejemplo incluye dos bloques principales: `"MINPAR"`, que contiene parámetros directamente utilizados en SPheno, y `"OTHER"`, 
-        que define parámetros adicionales necesarios para cálculos específicos (como constantes o valores de entrada para funciones dependientes).
+        This example includes two main blocks: "MINPAR", which contains parameters directly used in SPheno, and "OTHER",
+        which defines additional parameters needed for specific calculations (such as constants or input values for dependent functions).
 
-        #### Consideraciones adicionales:
+        #### Additional considerations:
 
-        - Los nombres de los parámetros deben coincidir exactamente con los definidos en los archivos de entrada de SPheno. 
-        - Las funciones utilizadas para calcular parámetros dinámicos deben estar correctamente documentadas y validadas, ya que errores 
-          en su definición pueden generar resultados inesperados durante la ejecución del análisis.
-       
+        - Parameter names must exactly match those defined in the SPheno input files.
+        - Functions used to calculate dynamic parameters must be properly documented and validated, as errors
+        in their definition can produce unexpected results during the analysis.
+
         ### ExpectedDataDict (dict):
 
-        Este argumento es un diccionario que define las cantidades a utilizar para evaluar la verosimilitud de los parámetros en el análisis. Se emplea para leer datos 
-        específicos de los archivos de salida generados por SPheno, y opcionalmente por MicrOmegas, a fin de calcular la verosimilitud de los parámetros en cada iteración 
-        del proceso MCMC. Además, permite extraer otras cantidades relevantes para realizar análisis adicionales o aplicar restricciones.
+        This argument is a dictionary that defines the quantities used to evaluate the likelihood of the parameters in the analysis. It is used to read specific data
+        from the output files generated by SPheno and, optionally, by MicrOmegas, in order to compute the likelihood of the parameters in each iteration
+        of the MCMC process. It also allows for extracting other relevant quantities for additional analysis or applying constraints.
 
-        La estructura de este diccionario es similar a la de 'SphenoBlocksDict', ya que se organiza en bloques. Cada bloque está representado por un diccionario interno, estructurado de la siguiente manera:
+        The structure of this dictionary is similar to that of 'SphenoBlocksDict', as it is organized into blocks. Each block is represented by an internal dictionary structured as follows:
 
-        1. **Llaves del diccionario principal:** 
-            Las llaves corresponden a los nombres de los bloques en los archivos de salida de SPheno o MicrOmegas. Por ejemplo:
-            - En el caso de SPheno, un bloque puede ser `"MASS"` (equivalente al bloque `BLOCK MASS` en el archivo de salida).
-            - Para decaimientos, se utiliza `"DECAY No"`, donde `No` es el identificador numérico del decaimiento.
-            - Si se incluye MicrOmegas, se debe especificar un bloque llamado `"MICROMEGAS"`.
+        1. **Keys of the main dictionary:**
+            The keys correspond to the block names in the output files of SPheno or MicrOmegas. For example:
+            - In the case of SPheno, a block could be "MASS" (equivalent to BLOCK MASS in the output file).
+            - For decays, use "DECAY No", where `No` is the numerical identifier of the decay.
+            - If MicrOmegas is included, a block named "MICROMEGAS" must be specified.
 
-        2. **Diccionarios internos (valores asociados a cada bloque):**
-            Cada bloque contiene un diccionario con los siguientes elementos:
-            - Las *llaves* representan las cantidades de interés.
-            - Los *valores* pueden adoptar dos formatos distintos dependiendo del propósito:
-                - **Lista:** Si la cantidad se usará para el cálculo de la verosimilitud, el valor debe ser una lista de dos elementos: 
-                    1. El valor esperado (extraído de literatura o experimentos).
-                    2. Su incertidumbre asociada.
-                - **Cadena de texto (str):** Si la cantidad no contribuye directamente a la verosimilitud pero se requiere para análisis adicionales, el valor debe ser una cadena. 
-                Se recomienda que esta cadena represente un número (por ejemplo, `"0.0"`) para garantizar que, en caso de no encontrarse el valor en el archivo de salida, se asignará dicho número por defecto.
-                - **Función:** Se pueden definir funciones para calcular dinámicamente los valores de la verosimilitud. Esto permite evaluar la verosimilitud en cada iteración 
-                del proceso MCMC sin necesidad de fijar valores estáticos. Esta función debe ser definida previamente y debe tomar como argumento un diccionario que contiene todos 
-                los parámetros que se incluyan en este diccionario (que se leeran de SPheno o Micromegas), accesibles mediante sus nombres especificando el bloque.
-                    1.Para calcular una única cantidad, la función debe devolver una lista de dos elementos [valor esperado, incertidumbre].
-                    2.Para calcular varias cantidades a la vez, la función debe devolver un diccionario donde las llaves sean las cantidades y los valores sean:
-                        a.Una lista [valor esperado, incertidumbre] si la cantidad contribuye a la verosimilitud.
-                        b.Un valor flotante si solo se desea extraer para análisis adicionales.
+        2. **Internal dictionaries (associated values for each block):**
+            Each block contains a dictionary with the following elements:
+            - The *keys* represent the quantities of interest.
+            - The *values* can take two formats depending on the purpose:
+                - **List:** If the quantity will be used for likelihood calculation, the value must be a list with two elements:
+                    1. The expected value (from literature or experiments).
+                    2. Its associated uncertainty.
+                - **String (str):** If the quantity is not directly used in likelihood calculation but is needed for additional analysis, the value should be a string.
+                It is recommended that the string represent a number (e.g., "0.0") to ensure that a default value is assigned if the quantity is not found in the output file.
+                - **Function:** Functions can be defined to dynamically compute the likelihood values. This allows evaluating likelihood at each iteration
+                of the MCMC process without relying on fixed values. The function must be defined beforehand and must take as an argument a dictionary containing all
+                the parameters included in this dictionary (read from SPheno or MicrOmegas), accessible by their block names.
+                    1. To compute a single quantity, the function must return a list with two elements [expected value, uncertainty].
+                    2. To compute multiple quantities at once, the function must return a dictionary where keys are the quantity names and values are:
+                        a. A list [expected value, uncertainty] if the quantity contributes to likelihood.
+                        b. A float if the quantity is only to be extracted for additional analysis.
 
-                    Por ejemplo:           
+                    For example:
+                    ```python
                     def dynamic_quantities(parameters: dict):
                         return {
                             "Mass_H1": [parameters["mH1"], 0.05 * parameters["mH1"]],
                             "Mass_H2": [parameters["mH2"], 0.05 * parameters["mH2"]],
                             "Mixing_Angle": parameters["alpha"]
                         }
+                    ```
 
-        #### Detalles adicionales:
-        - Todos los valores especificados en este diccionario que estén presentes en los outputs de SPheno o MicrOmegas se incluirán en el archivo de salida generado por el análisis. Esto es útil para almacenar 
-        información adicional que no se utiliza en el cálculo de la verosimilitud pero puede ser relevante para otros análisis.
-        - Para decaimientos, los bloques deben incluir el prefijo `"DECAY "` seguido del identificador de la partícula en cuestión. Por ejemplo:
+        #### Additional details:
+        - All values specified in this dictionary that are present in the outputs from SPheno or MicrOmegas will be included in the output file generated by the analysis. This is useful for storing
+        additional information that is not used in the likelihood calculation but may be relevant for other analyses.
+        - For decays, blocks must include the prefix "DECAY " followed by the identifier of the particle. For example:
         ```python
         "DECAY 25": {
             "WIDTH": [3.7e-3, 1.7e-3],
@@ -169,200 +169,162 @@ class smmcmc:
         }
         ```
 
-        Si se utiliza MicrOmegas, debe incluirse un bloque llamado "MICROMEGAS" con las cantidades específicas a extraer. Por ejemplo:
-        
-        ```python
-        "MICROMEGAS":
-        {
-            "Xf (Freeze-out temperature)": "0.0",
-            "Omega h^2 (Dark matter relic density)": "0.0" 
-        }
-        ```
+        If using MicrOmegas, a block named "MICROMEGAS" must be included with the specific quantities to extract. For example:
 
-        #### Aquí un ejemplo de `ExpectedDataDict` bien construido:
         ```python
-        ExpectedDataDict = { 
-        "MASS":
-        {
-            "hh_1" : "0.0",
-            "FX0_1" : "0.0", 
-
-        },
-        "DECAY 25":
-        {   
-            "WIDTH": [3.7e-3,1.7e-3],
-            "BR(hh_1 -> Ah_2 Ah_2 )": "0.0",
-            "BR(hh_1 -> FX0_1 FX0_1 )" : "0.0",
-        },
-        "MICROMEGAS":
-        {
+        "MICROMEGAS": {
             "Xf (Freeze-out temperature)": "0.0",
             "Omega h^2 (Dark matter relic density)": [0.120, 0.0036]
-        }
         }
         ```
 
         ### ConstraintsBeforeSPheno (list):
 
-        Este argumento permite definir restricciones (`constraints`) que deben verificarse antes de ejecutar SPheno en cada iteración del análisis. Estas restricciones se aplican a los parámetros 
-        que se encuentran en `SphenoBlocksDict`. Implementar los `constraints` de esta manera resulta en un análisis más eficiente, ya que evita correr SPheno y/o MicrOmegas en 
-        iteraciones donde los parámetros de entrada ya no cumplen con las restricciones definidas.
+        This argument allows defining constraints that must be verified before running SPheno at each iteration of the analysis. These constraints are applied to the parameters
+        in `SphenoBlocksDict`. Implementing constraints in this way results in a more efficient analysis since it avoids running SPheno and/or MicrOmegas for
+        iterations where input parameters already fail to meet defined restrictions.
 
-        #### Definición:
-        `ConstraintsBeforeSPheno` es una lista de funciones previamente definidas. Cada función debe cumplir con las siguientes características:
-        1. **Recibir un único argumento:** 
-        Un diccionario que sigue la misma estructura que `SphenoBlocksDict`, no se puede incluir elementos que no se hayan nombrado previamente ahí. 
-        Este diccionario representa los bloques y parámetros que se usarán para evaluar las restricciones.
-        2. **Retornar un valor booleano:**
-        - Retorna `True` si los parámetros cumplen con la restricción evaluada.
-        - Retorna `False` si no se cumple la restricción.
+        #### Definition:
+        `ConstraintsBeforeSPheno` is a list of previously defined functions. Each function must meet the following characteristics:
+        1. **Receive a single argument:** 
+        A dictionary following the same structure as `SphenoBlocksDict`. It cannot include elements not previously named there.
+        2. **Return a boolean value:**
+        - Returns `True` if the parameters meet the evaluated restriction.
+        - Returns `False` if the restriction is not met.
 
-        #### Ejemplo:
-        A continuación, se muestra un ejemplo detallado de cómo definir y usar un `ConstraintsBeforeSPheno`:
+        #### Example:
+        Detailed example of defining and using `ConstraintsBeforeSPheno`:
 
-        
-        ####Definición de una función de restricción
         ```python
         def chi_masses(blocks):
-            # Extracción de los valores del bloque KAPPAIN
             kappain = blocks["KAPPAIN"]
             chi_1 = kappain["Kap(1,1)"]
             chi_2 = kappain["Kap(2,2)"]
             chi_3 = kappain["Kap(3,3)"]
-
-            # Evaluación del constraint
             return (chi_1 < chi_2 and chi_2 < chi_3)
         ```
 
-        #### Definición de ConstraintsBeforeSPheno
         ```python
         ConstraintsBeforeSPheno = [chi_masses]
         ```
 
         ### ConstraintsAfterSPheno (list):
 
-        Este argumento permite definir restricciones (`constraints`) que deben verificarse después de ejecutar SPheno en cada iteración del análisis. Estas restricciones se aplican a los parámetros 
-        que se encuentran en `ExpectedDataDict` y/o `SphenoBlocksDict`. 
-        #### Definición:
-        `ConstraintsAfterSPheno` es una lista de funciones previamente definidas. Cada función debe cumplir con las siguientes características:
-        1. **Recibir un único argumento:** 
-        Un diccionario que sigue la misma estructura que `ExpectedDataDict` y/o `SphenoBlocksDict`, no se puede incluir elementos que no se hayan nombrado previamente ahí. 
-        Este diccionario representa los bloques y parámetros que se usarán para evaluar las restricciones.
-        2. **Retornar un valor booleano:**
-        - Retorna `True` si los parámetros cumplen con la restricción evaluada.
-        - Retorna `False` si no se cumple la restricción.
+        This argument allows defining constraints that must be verified after running SPheno at each iteration of the analysis. These constraints are applied to the parameters
+        in `ExpectedDataDict` and/or `SphenoBlocksDict`.
 
-        #### Ejemplo:
-        A continuación, se muestra un ejemplo detallado de cómo definir y usar un `ConstraintsAfterSPheno`:
+        #### Definition:
+        `ConstraintsAfterSPheno` is a list of previously defined functions. Each function must meet the following characteristics:
+        1. **Receive a single argument:** 
+        A dictionary following the structure of `ExpectedDataDict` and/or `SphenoBlocksDict`. It cannot include elements not previously named there.
+        2. **Return a boolean value:**
+        - Returns `True` if the parameters meet the evaluated restriction.
+        - Returns `False` if the restriction is not met.
 
-        
-        ####Definición de una función de restricción
+        #### Example:
+        Detailed example of defining and using `ConstraintsAfterSPheno`:
+
         ```python
-        def branching_ratios(model_decay:dict):
+        def branching_ratios(model_decay: dict):
             alpha = model_decay["OTHER"]["alpha"]
             model_decay_ = model_decay["DECAY 25"]
             br1 = float(model_decay_["BR(hh_1 -> Ah_2 Ah_2 )"])
             br2 = float(model_decay_["BR(hh_1 -> FX0_1 FX0_1 )"])
             br3 = float(model_decay_["BR(hh_2 -> FX0_2 FX0_2 )"])
-            br4 = float(model_decay_["BR(hh_2 -> FX0_3 FX0_3 )" ])
-    
-            return ((np.cos(alpha)**2) *(br1 + br2 + br3 +br4)) < 0.19
+            br4 = float(model_decay_["BR(hh_2 -> FX0_3 FX0_3 )"])
+            return ((np.cos(alpha)**2) * (br1 + br2 + br3 + br4)) < 0.19
         ```
 
-        #### Definición de ConstraintsAfterSPheno
         ```python
         ConstraintsAfterSPheno = [branching_ratios]
         ```
-        
+
         ### SPhenoFilePath (string):
 
-        Este parámetro indica la ruta absoluta al archivo ejecutable del modelo de SPheno.
+        This parameter indicates the absolute path to the SPheno model executable file.
 
-        Ejemplo:
+        Example:
         ```python
         SPhenoFilePath = "/home/f.herreras/SPheno-4.0.5/bin/SPhenoScotogenic_SLNV"
         ```
 
         ### SPhenoInputFilePath (string):
 
-        Este parámetro indica la ruta absoluta al archivo de input del modelo de SPheno.
+        This parameter indicates the absolute path to the SPheno model input file.
 
-        Ejemplo:
+        Example:
         ```python
         SPhenoInputFilePath = "/home/f.herreras/SPheno-4.0.5/Scoto_SLNV_11.10/Input_Files/LesHouches.in.Scotogenic_SLNV"
         ```
 
         ### UseMicrOmegas (boolean):
 
-        Este parámetro indica si se usa o no MicrOmegas en el análisis. Por defecto es False, pero si se especifica como True el código llama a MicrOmegas en cada ciclo alimentándolo
-        con el output de SPheno del ciclo.
+        This parameter indicates whether to use MicrOmegas in the analysis. By default, it is False, but if set to True, the code will call MicrOmegas in each cycle using
+        the output from SPheno for that cycle.
 
         ### MicrOmegasFilePath (string):
 
-        De haber especificado el uso de MicrOmegas, debe indicarse en este parámetro la ruta absoluta al ejecutable del modelo en MicrOmegas.
+        If MicrOmegas is used, this parameter must specify the absolute path to the executable of the model in MicrOmegas.
 
-        Ejemplo:
+        Example:
         ```python
-        MicrOmegasFilePath="/home/f.herreras/micromegas_6.0.5/Scoto_SLNV_11.10/CalcOmega_MOv5"
+        MicrOmegasFilePath = "/home/f.herreras/micromegas_6.0.5/Scoto_SLNV_11.10/CalcOmega_MOv5"
         ```
+
         ### nWalkers (int):
 
-        Indica el número de walkers que tendrá el ensemble sampling del Markov Chain Monte Carlo
+        Indicates the number of walkers in the ensemble sampling of the Markov Chain Monte Carlo.
 
         ### LikelihoodThreshold (float):
 
-        Indica la verosimilitud mínima que deben tener los parámetros para contar como punto aceptado (no confundir con la probabilidad de aceptación de cada grupo de parámetros)
+        Indicates the minimum likelihood that parameters must have to count as an accepted point (not to be confused with the acceptance probability of a parameter set).
 
         ### AcceptedPoints (int):
 
-        Indica la cantidad de puntos aceptados requeridos para finalizar el análisis.
+        Indicates the number of accepted points required to complete the analysis.
 
         ### OutputMCMCfile (string):
 
-        Indica el nombre del archivo con los puntos que retornará el análisis.
+        Indicates the name of the file containing the points returned by the analysis.
 
         ### Steps (False or int):
 
-        Si además de querer un número máximo de puntos aceptados se requiere un número de ciclos máximos se debe especificar el número, si no, dejar en `False`.
+        If a maximum number of cycles is also desired in addition to a target number of accepted points, the number should be specified. Otherwise, leave as `False`.
 
         ### Stretch (float):
 
-        En el método de ensemble sampling que utiliza emcee, el parámetro stretch factor es un valor que controla el tamaño de los pasos propuestos por el muestreo 
-        en el espacio de parámetros. 
+        In the ensemble sampling method used by emcee, the stretch factor is a value that controls the size of proposed steps in parameter space.
 
-        En el Stretch Move, cada walker propone un nuevo punto basado en la posición de los demás caminantes. 
-        El nuevo punto se genera de la siguiente forma:
+        In the Stretch Move, each walker proposes a new point based on the position of other walkers. The new point is generated as:
             y = x + Z(x' - x)
 
-        Donde:
-        - x es la posición actual del caminante.
-        - x' es una posición elegida al azar de otro caminante en el ensemble.
-        - Z es un factor de escala aleatorio que depende del stretch factor a, y se define como:
+        Where:
+        - x is the current position of the walker.
+        - x' is a randomly selected position from another walker.
+        - Z is a random scaling factor depending on the stretch factor a, defined as:
             Z = Uniform[1/a, a]
-        Este Z determina cuánto se "estira" o "contrae" el movimiento hacia el otro 
-        caminante, de ahí el nombre Stretch Move.
+        This Z determines how much the step is "stretched" or "contracted" towards the other walker, hence the name Stretch Move.
 
-        - Valores pequeños de Stretch: Producen pasos pequeños (menos exploración del espacio de parámetros, más local).
-        - Valores grandes de Stretch: Producen pasos grandes (mayor exploración, pero pueden ser ineficientes si el espacio de parámetros es complicado).
+        - Small stretch values: Produce small steps (less exploration, more local).
+        - Large stretch values: Produce large steps (greater exploration, but potentially inefficient in complex parameter spaces).
 
         ### LogParameterization (boolean):
 
-        Al usar emcee, es recomendable trabajar con números en el intervalo [0, 1], lo que implica realizar un reescalado de los datos. Este reescalado 
-        puede ser de dos tipos: uniforme (si se indica `False`) o logarítmico (si se indica `True`). La elección entre estos dos métodos depende
-        de las ventajas específicas que cada uno ofrezca según el contexto del problema, siendo ambos enfoques válidos dependiendo del caso.
+        When using emcee, it is recommended to work with numbers in the [0, 1] interval, which implies rescaling the data. This rescaling
+        can be of two types: uniform (if `False` is specified) or logarithmic (if `True` is specified). The choice between these methods depends
+        on the specific advantages each offers depending on the context of the problem. Both approaches are valid.
 
         ### StrictParametersRanges (boolean):
 
-        Indica si los parámetros de `SphenoBlocksDict` definidos como intervalos deben respetar estrictamente sus límites.  
-        - Si se establece en `False`, los parámetros pueden salir de los límites del intervalo durante la exploración.  
-        - Si se establece en `True`, los parámetros permanecerán estrictamente dentro de los límites definidos.  
+        Indicates whether the parameters in `SphenoBlocksDict` defined as intervals must strictly respect their limits.  
+        - If set to `False`, parameters may go beyond the defined interval limits during exploration.  
+        - If set to `True`, parameters will remain strictly within the defined bounds.
 
         ### WriteOnlyAccepted (boolean):
 
-        Determina qué datos se guardan en el archivo de salida:  
-        - Si se establece en `True`, solo se guardan los datos aceptados cuyo valor sea mayor que el umbral definido por `LikelihoodThreshold`.  
-        - Si se establece en `False`, se guardan todos los datos explorados en el MCMC, independientemente de su valor.  
-
+        Determines which data are saved in the output file:  
+        - If set to `True`, only accepted data with likelihood above `LikelihoodThreshold` are saved.  
+        - If set to `False`, all explored MCMC data are saved, regardless of likelihood value.
         """
         self.spheno_block_dict = SphenoBlocksDict  
         self.expected_data_dict = ExpectedDataDict
