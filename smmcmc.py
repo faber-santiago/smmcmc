@@ -8,7 +8,7 @@ import re
 import csv
 from tqdm import tqdm
 
-#incluyendo la verosimilitud en función
+
 class smmcmc:
     def __init__(self, SphenoBlocksDict, ExpectedDataDict, ConstraintsBeforeSPheno, ConstraintsAfterSPheno,
                 SPhenoFilePath, SPhenoInputFilePath, SPhenoOutputFilePath, UseMicrOmegas = False, MicrOmegasFilePath = " ",
