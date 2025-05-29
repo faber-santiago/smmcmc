@@ -856,7 +856,9 @@ class smmcmc:
         if np.isinf(prior_bs):
 
             return -np.inf, np.append(np.full(len(self.blob_names), 0), -np.inf)
-        
+        #This does not show the points that are rejectedbefore SPheno in the output csv because of the
+        #conditional that is below in the run. I want to change it to have 3 conditions. To save everything,
+        #everything accepted before SPheno, and just points accepted after all
 
         log_lik, blob = self.log_likelihood(self.expected_data_dict,calculated_model_data_dict)
         full_parameters_values = self.dict_to_vector(complete_spheno_input_dict)[2]
