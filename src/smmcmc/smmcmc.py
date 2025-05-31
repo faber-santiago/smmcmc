@@ -10,8 +10,8 @@ from tqdm import tqdm
 
 
 class smmcmc:
-    def __init__(self, SphenoBlocksDict, ExpectedDataDict, ConstraintsBeforeSPheno, ConstraintsAfterSPheno,
-                SPhenoFilePath, SPhenoInputFilePath, UseMicrOmegas = False, MicrOmegasFilePath = " ",
+    def __init__(self, SphenoBlocksDict: dict, ExpectedDataDict: dict, ConstraintsBeforeSPheno: list, ConstraintsAfterSPheno: list,
+                SPhenoFilePath: str, SPhenoInputFilePath: str, UseMicrOmegas = False, MicrOmegasFilePath = " ",
                 nWalkers = 100, LikelihoodThreshold = 0.9, AcceptedPoints = 1000, OutputMCMCfile = "output_mcmc.csv",
                 Steps = None, Stretch = 1.2, LogParameterization = False, StrictParametersRanges = True, WriteOnlyAccepted = True):
 
@@ -342,10 +342,22 @@ class smmcmc:
         self.log_parameterization = LogParameterization 
         self.strict_parameters_ranges = StrictParametersRanges 
         self.write_only_accepted = WriteOnlyAccepted
-    
 
-        self.likelihood_threshold = np.log(LikelihoodThreshold)    #call an error if the likelihood is not from 0 to 1
-        self.spheno_output_file_path = self.spheno_input_file_path.replace("LesHouches.in", "SPheno.spc") # call an error if the file isnt corretly named
+        if not os.path.exists(SPhenoFilePath):
+            raise FileNotFoundError(f"The file {SPhenoFilePath} was not found")
+        
+        if not os.path.exists(SPhenoInputFilePath):
+            raise FileNotFoundError(f"The file {SPhenoInputFilePath} was not found")
+    
+        if LikelihoodThreshold > 1 or LikelihoodThreshold < 0:
+            raise ValueError("The likelihood must be between 0 and 1")
+        
+        self.likelihood_threshold = np.log(LikelihoodThreshold)
+
+        try:
+            self.spheno_output_file_path = self.spheno_input_file_path.replace("LesHouches.in", "SPheno.spc") 
+        except Exception as e:
+            print(f"There was an error trying to read the input file (it must be named LesHouches.in.model name)")
 
 
     
