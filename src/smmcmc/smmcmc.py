@@ -503,7 +503,7 @@ class smmcmc:
 
         with open(self.spheno_input_file_path, 'r') as f:
             lines = f.readlines()
-        #llamar error si no encuentra el archivo
+
         in_block = False
         block_to_change = None
         modified = False
