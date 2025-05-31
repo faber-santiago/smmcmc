@@ -335,7 +335,6 @@ class smmcmc:
         self.use_micromegas = UseMicrOmegas 
         self.micromegas_file_path = MicrOmegasFilePath 
         self.nwalkers = nWalkers 
-        self.likelihood_threshold = np.log(LikelihoodThreshold)    
         self.accepted_points = AcceptedPoints 
         self.output_mcmc_file = OutputMCMCfile 
         self.steps = Steps
@@ -343,8 +342,10 @@ class smmcmc:
         self.log_parameterization = LogParameterization 
         self.strict_parameters_ranges = StrictParametersRanges 
         self.write_only_accepted = WriteOnlyAccepted
-        self.dinamic_likelihood = False
-        self.spheno_output_file_path = self.spheno_input_file_path.replace("LesHouches.in", "SPheno.spc")
+    
+
+        self.likelihood_threshold = np.log(LikelihoodThreshold)    #call an error if the likelihood is not from 0 to 1
+        self.spheno_output_file_path = self.spheno_input_file_path.replace("LesHouches.in", "SPheno.spc") # call an error if the file isnt corretly named
 
 
     
@@ -419,7 +420,7 @@ class smmcmc:
 
 
     @staticmethod
-    def calc_fixed_parameters2(blocks_dict):
+    def calc_fixed_parameters(blocks_dict):
         
         blocks_dict_copy = copy.deepcopy(blocks_dict)
 
@@ -490,7 +491,7 @@ class smmcmc:
 
         with open(self.spheno_input_file_path, 'r') as f:
             lines = f.readlines()
-
+        #llamar error si no encuentra el archivo
         in_block = False
         block_to_change = None
         modified = False
@@ -577,7 +578,7 @@ class smmcmc:
         return spheno_run, message
     
 
-
+    #sacar esto de aqui en otro archivo para que lo puedan modificar
     def run_micromegas(self):
         command = f"ulimit -c 0 && {self.micromegas_file_path} {self.spheno_output_file_path}"
         work_dir = os.path.dirname(self.spheno_output_file_path)
@@ -830,7 +831,7 @@ class smmcmc:
 
         spheno_input_blocks_dict = self.complete_dict(self.main_parameters_names, normalized_main_parameters_values, self.spheno_block_dict)
 
-        complete_spheno_input_dict = self.calc_fixed_parameters2(spheno_input_blocks_dict)
+        complete_spheno_input_dict = self.calc_fixed_parameters(spheno_input_blocks_dict)
 
         prior_bs = self.log_prior_before_SPheno(normalized_main_parameters_values,self.main_parameters_ranges, complete_spheno_input_dict)
 
@@ -892,7 +893,7 @@ class smmcmc:
         
         complete_spheno_block_dict = self.complete_dict(self.main_parameters_names, init_parameters[0,:], self.spheno_block_dict)
 
-        complete_spheno_block_dict = self.calc_fixed_parameters2(complete_spheno_block_dict)
+        complete_spheno_block_dict = self.calc_fixed_parameters(complete_spheno_block_dict)
 
         calculated_output_data_dict = self.read_outputs(self.expected_data_dict)
 
