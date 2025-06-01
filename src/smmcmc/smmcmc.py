@@ -363,6 +363,20 @@ class smmcmc:
     
     @staticmethod
     def dict_to_vector(blocks_dict):
+        """
+        Transform the dictionary containing the block and parameter structure into four different NumPy arrays, 
+        categorizing them based on the parameter value type (float, list, str or callable).
+
+        Args:
+            blocks_dict (dict): Dictionary with a structure of blocks and parameters.
+
+        Returns:
+            tuple: A tuple containing:
+                - numpy.ndarray: An array with the values of the parameters that were lists.
+                - numpy.ndarray: An array with the names of those list parameters.
+                - numpy.ndarray: An array with the values of the remaining parameters. 
+                - numpy.ndarray: An array with the names of the remaining parameters.
+        """
 
 
         main_parameters_values = []
