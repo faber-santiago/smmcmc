@@ -407,31 +407,21 @@ class smmcmc:
         
         return main_parameters_values, main_parameters_names, extra_parameters_values, extra_parameters_names
 
-
-
-    @staticmethod
-    def vector_to_dict(main_parameters_values, main_parameters_names, extra_parameters_values, extra_parameters_names):
-
-        blocks_return = {}
-        all_parameters = np.concatenate((main_parameters_names, extra_parameters_names))
-        all_values = np.concatenate((main_parameters_values, extra_parameters_values))
-
-        for parameter, value in zip(all_parameters, all_values):
-            
-            blockandparameter = parameter.split()
-            blockname = blockandparameter[0]
-            parametername = ' '.join(blockandparameter[1:])
-            blockcheck = blocks_return.get(blockname)
-
-            if blockcheck:
-                blocks_return[blockname][parametername] = value
-            else:
-                blocks_return[blockname] = {}
-                blocks_return[blockname][parametername] = value
-        return blocks_return
-
     @staticmethod
     def complete_dict(parameters_names,parameters_values,blocks_dict):
+        """
+        It takes two arrays one containing parameter names and one containing their corresponding values— 
+        as well as a dictionary. It then updates the dictionary by assigning each parameter name the 
+        corresponding value from the arrays.
+
+        Args:
+            parameters_names (numpy.array): Array with the name of the parameters
+            parameters_values (numpy.array): Array with the values of the parameter
+            blocks_dict (dict): Dictionary with a structure of blocks and parameters.
+
+        Returns:
+            dict: Dictionary with updated values.
+        """
 
         blocks_copy = copy.deepcopy(blocks_dict)
 
@@ -446,7 +436,23 @@ class smmcmc:
 
 
     @staticmethod
-    def calc_fixed_parameters(blocks_dict):
+    def calculate_dependent_params(blocks_dict):
+        """
+        It takes a dictionary structured by blocks and parameters. Then, iterating through the parameters
+        in the order they appear, it identifies those assigned a callable value. Each callable is executed 
+        with the entire dictionary as its argument, allowing it to compute the value of one or more parameters 
+        based on the others.
+
+        It is important that if a callable A depends on another parameter B that also needs to be computed, the 
+        parameter B must appear earlier in the dictionary. This ensures that its value is calculated 
+        first, allowing subsequent callables to use it correctly as input.
+
+        Args: 
+            blocks_dict (dict): Dictionary with a structure of blocks and parameters.
+
+        Returns:
+            dict: Dictionary with updated values.
+        """
         
         blocks_dict_copy = copy.deepcopy(blocks_dict)
 
@@ -469,18 +475,26 @@ class smmcmc:
 
 
     @staticmethod
-    def unnormalize(main_parameters_values, main_parameters_ranges):
+    def unnormalize(parameters_values, parameters_ranges):
+        """
+        For values in an array of parameters normalized linearly between 0 and 1, it returns their 
+        corresponding actual values based on the specified range for each parameter provided in another 
+        array.
 
+        Args:
+            parameters_values (numpy.array): Array with the normalized values
+            parameters_ranges (numpy.array): Array with the given range of the values
+        """
 
-        min_values = main_parameters_ranges[:, 0]
-        max_values = main_parameters_ranges[:, 1]
+        min_values = parameters_ranges[:, 0]
+        max_values = parameters_ranges[:, 1]
 
         ranges = max_values - min_values
         
-        main_parameters_values_copy = main_parameters_values.copy()
-        main_parameters_values_copy = main_parameters_values * ranges + min_values
+        parameters_values_copy = parameters_values.copy()
+        parameters_values_copy = parameters_values * ranges + min_values
         
-        return main_parameters_values_copy
+        return parameters_values_copy
     
 
 
@@ -857,7 +871,7 @@ class smmcmc:
 
         spheno_input_blocks_dict = self.complete_dict(self.main_parameters_names, normalized_main_parameters_values, self.spheno_block_dict)
 
-        complete_spheno_input_dict = self.calc_fixed_parameters(spheno_input_blocks_dict)
+        complete_spheno_input_dict = self.calculate_dependent_params(spheno_input_blocks_dict)
 
         prior_bs = self.log_prior_before_SPheno(normalized_main_parameters_values,self.main_parameters_ranges, complete_spheno_input_dict)
 
@@ -919,7 +933,7 @@ class smmcmc:
         
         complete_spheno_block_dict = self.complete_dict(self.main_parameters_names, init_parameters[0,:], self.spheno_block_dict)
 
-        complete_spheno_block_dict = self.calc_fixed_parameters(complete_spheno_block_dict)
+        complete_spheno_block_dict = self.calculate_dependent_params(complete_spheno_block_dict)
 
         calculated_output_data_dict = self.read_outputs(self.expected_data_dict)
 
