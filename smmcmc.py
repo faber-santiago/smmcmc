@@ -465,21 +465,38 @@ class smmcmc:
 
         for i in range(len(main_parameters_values)):
 
-            max_values = main_parameters_ranges[i, 1]
-            min_values = main_parameters_ranges[i, 0]
+            vmin, vmax = main_parameters_ranges[i]
             
-            if min_values != 0:
+            if vmin < 0 and vmax > 0:
+                
+                abs_max = max(abs(vmin), abs(vmax))
+                log_max = np.log10(abs_max + 1e-10)
 
-                max_values = np.log10(max_values)
-                min_values = np.log10(min_values)
+                
+                signed_val = main_parameters_values[i] - 0.5
+                real_val = np.sign(signed_val) * 10**(abs(signed_val) * 2 * log_max)
 
-                order = main_parameters_values_copy[i]*(max_values - min_values) + min_values
+                main_parameters_values_copy[i] = real_val
 
-                main_parameters_values_copy[i] = 10**(order)
+            elif vmin > 0:
+                
+                log_min = np.log10(vmin)
+                log_max = np.log10(vmax)
+
+                order = main_parameters_values[i] * (log_max - log_min) + log_min
+                main_parameters_values_copy[i] = 10**order
+
+            elif vmax < 0:
+                
+                log_min = np.log10(abs(vmax))
+                log_max = np.log10(abs(vmin))
+
+                order = main_parameters_values[i] * (log_max - log_min) + log_min
+                main_parameters_values_copy[i] = -10**order
 
             else:
-
-                main_parameters_values_copy[i] = main_parameters_values_copy[i]*(max_values - min_values) + min_values
+                
+                main_parameters_values_copy[i] = main_parameters_values[i] * (vmax - vmin) + vmin
 
         return main_parameters_values_copy
     
@@ -829,14 +846,14 @@ class smmcmc:
             normalized_main_parameters_values = self.unnormalize(main_parameters_values, self.main_parameters_ranges)
 
         spheno_input_blocks_dict = self.complete_dict(self.main_parameters_names, normalized_main_parameters_values, self.spheno_block_dict)
-
+            
         complete_spheno_input_dict = self.calc_fixed_parameters2(spheno_input_blocks_dict)
-
+        full_parameters_values = self.dict_to_vector(complete_spheno_input_dict)[2]
         prior_bs = self.log_prior_before_SPheno(normalized_main_parameters_values,self.main_parameters_ranges, complete_spheno_input_dict)
 
         if np.isinf(prior_bs):
 
-            return -np.inf, np.append(np.full(len(self.blob_names), 0), -np.inf)
+            return -np.inf, np.append(full_parameters_values,np.full(len(self.blob_names)-len(full_parameters_values)+1, 0))
             
         self.change_spheno_parameters(complete_spheno_input_dict)
 
@@ -853,15 +870,20 @@ class smmcmc:
 
         prior_as = self.log_prior_after_SPheno(calculated_model_data_dict | complete_spheno_input_dict)
 
-        if np.isinf(prior_bs):
+        if np.isinf(prior_as):
+            model_values, _, extra_model_values,_ = self.dict_to_vector(calculated_model_data_dict)
 
-            return -np.inf, np.append(np.full(len(self.blob_names), 0), -np.inf)
+            extra_model_values = extra_model_values.astype(float)
+
+            blob = np.concatenate((model_values[:,0], extra_model_values))
+            full_blob = np.concatenate((full_parameters_values, blob))
+            return -np.inf, np.concatenate((full_parameters_values, blob, np.array([0])))
         #This does not show the points that are rejectedbefore SPheno in the output csv because of the
         #conditional that is below in the run. I want to change it to have 3 conditions. To save everything,
         #everything accepted before SPheno, and just points accepted after all
 
         log_lik, blob = self.log_likelihood(self.expected_data_dict,calculated_model_data_dict)
-        full_parameters_values = self.dict_to_vector(complete_spheno_input_dict)[2]
+        
         posterior = prior_bs + prior_as + log_lik
         full_blob = np.concatenate((full_parameters_values, blob))
         full_blob = np.append(full_blob, np.exp(posterior))
@@ -876,6 +898,7 @@ class smmcmc:
         def log_posterior_caller(params):
 
             return self.log_posterior(params)
+
         
         self.main_parameters_ranges, self.main_parameters_names, _ , _ = self.dict_to_vector(self.spheno_block_dict)
 
@@ -930,11 +953,13 @@ class smmcmc:
                     row = sample.blobs.astype(float)
                     if self.write_only_accepted == False:
                         row = row[row[:,-1] >= 0]
+                        row = np.unique(row, axis=0)
                         f.writerows(row)
 
                     else:
 
                         accepted_samples_array = row[row[:,-1] >= np.exp(self.likelihood_threshold)]
+                        accepted_samples_array = np.unique(accepted_samples_array, axis=0)
                         f.writerows(accepted_samples_array)
 
                     if accepted_samples >= self.accepted_points:

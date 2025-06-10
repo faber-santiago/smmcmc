@@ -80,7 +80,8 @@ def Casas_Ibarra(parameters):		# output the full G coupling matrix, a dictionary
         #print('\n==========\n')
         #print('Kappa = ',ka11, ka23)
         #Eta masses
-        metaR = np.sqrt(np.abs(mEta2+0.5*lamEtaSig*vSi**2+0.5*(lamHEta3+lambda4HEta+lambda5HEta)*v**2))
+        #metaR = np.sqrt(np.abs(mEta2+0.5*lamEtaSig*vSi**2+0.5*(lamHEta3+lambda4HEta+lambda5HEta)*v**2))
+        metaR = other["M_Et_R"]
         metaI = np.sqrt(np.abs(mEta2+0.5*lamEtaSig*vSi**2+0.5*(lamHEta3+lambda4HEta-lambda5HEta)*v**2))
 
     # mH1_tree = l1*0.5*v**2 + l4Sig*0.5*vSi**2 - np.sqrt((2*lHSig*v*vSi)**2 + (l1*v**2 - l4Sig*vSi**2)**2)
