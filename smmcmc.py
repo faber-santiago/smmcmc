@@ -428,7 +428,7 @@ class smmcmc:
             for key, value in block.items():   
                 if callable(block[key]):
 
-                    calculated_value = value(blocks_dict)
+                    calculated_value = value(blocks_dict_copy)
 
                     if isinstance(calculated_value, dict):
 
@@ -459,45 +459,26 @@ class smmcmc:
 
     @staticmethod
     def unnormalize_log(main_parameters_values, main_parameters_ranges):
-
-
+        
         main_parameters_values_copy = main_parameters_values.copy()
 
         for i in range(len(main_parameters_values)):
 
-            vmin, vmax = main_parameters_ranges[i]
+            max_values = main_parameters_ranges[i, 1]
+            min_values = main_parameters_ranges[i, 0]
+
+            if min_values <= 0 and max_values > 0:
+
+                main_parameters_values_copy[i] = main_parameters_values_copy[i]*(max_values - min_values) + min_values
             
-            if vmin < 0 and vmax > 0:
-                
-                abs_max = max(abs(vmin), abs(vmax))
-                log_max = np.log10(abs_max + 1e-10)
+            elif min_values > 0 and max_values > 0:
 
-                
-                signed_val = main_parameters_values[i] - 0.5
-                real_val = np.sign(signed_val) * 10**(abs(signed_val) * 2 * log_max)
+                max_values = np.log10(max_values)
+                min_values = np.log10(min_values)
 
-                main_parameters_values_copy[i] = real_val
+                order = main_parameters_values_copy[i]*(max_values - min_values) + min_values
 
-            elif vmin > 0:
-                
-                log_min = np.log10(vmin)
-                log_max = np.log10(vmax)
-
-                order = main_parameters_values[i] * (log_max - log_min) + log_min
-                main_parameters_values_copy[i] = 10**order
-
-            elif vmax < 0:
-                
-                log_min = np.log10(abs(vmax))
-                log_max = np.log10(abs(vmin))
-
-                order = main_parameters_values[i] * (log_max - log_min) + log_min
-                main_parameters_values_copy[i] = -10**order
-
-            else:
-                
-                main_parameters_values_copy[i] = main_parameters_values[i] * (vmax - vmin) + vmin
-
+                main_parameters_values_copy[i] = 10**(order)
         return main_parameters_values_copy
     
 
@@ -947,19 +928,23 @@ class smmcmc:
                 for sample in self.sampler.sample(init_parameters, iterations = self.steps, progress = True, store = False):
 
                     log_prob = sample.log_prob
-                    accepted_samples += len(log_prob[log_prob > self.likelihood_threshold])
+                    #accepted_samples += len(log_prob[log_prob > self.likelihood_threshold])
                     pbar.update(len(log_prob[log_prob > self.likelihood_threshold]))
 
                     row = sample.blobs.astype(float)
                     if self.write_only_accepted == False:
                         row = row[row[:,-1] >= 0]
+
                         row = np.unique(row, axis=0)
+                        accepted_samples += len(row[row[:,-1] >= np.exp(self.likelihood_threshold)])
                         f.writerows(row)
 
                     else:
 
                         accepted_samples_array = row[row[:,-1] >= np.exp(self.likelihood_threshold)]
+
                         accepted_samples_array = np.unique(accepted_samples_array, axis=0)
+                        accepted_samples += len(accepted_samples_array)
                         f.writerows(accepted_samples_array)
 
                     if accepted_samples >= self.accepted_points:
