@@ -916,6 +916,10 @@ class smmcmc:
 
         accepted_samples = 0 
 
+        if not os.path.exists(self.output_mcmc_file):
+            print("The output file does not exist. It will be created.")
+        else:
+            print("The output file already exists. It will be overwritten.")
         with open(self.output_mcmc_file, mode="w", newline="", encoding="utf-8") as file:
 
             f = csv.writer(file, delimiter=";")
